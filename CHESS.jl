@@ -22,9 +22,9 @@ end
 
 struct Game
     Win::Bool
-    Player::Bool # 0 para las blancas, 1 para las negras
+    Team::Bool # 0 para las blancas, 1 para las negras
     Board::Matrix{Any}
-    Game(Win,Player, Board) = !is_square_8(Board) ? error("Board not 8x8") : new(Win,Player,Board)
+    Game(Win,Team, Board) = !is_square_8(Board) ? error("Board not 8x8") : new(Win,Team,Board)
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -44,49 +44,20 @@ function GetWin(Game::Game)
     return Game.Win
 end
 
+function GetTeam(Game::Game)
+    return Game.Team 
+end
+
+function GetTeam(Piece::Piece)
+    return Piece.team
+end
+
 function ChangeBoard(Game::Game,NewBoard::AbstractArray{Any,2})
     Game.Board = NewBoard
 end
 
 function KillPiece(Piece::Piece)
     Piece.alive = false
-end
-
-
-
-# -----------------------------------------------------------------------------------------------
-# ----------------------------------- COMPROBACIÓN LEGAL ----------------------------------------
-# -----------------------------------------------------------------------------------------------
-
-function CheckRook(Game::Game, Pos::Vector{Int64} )
-    return isa(GetBoard(Game, Pos), Rook)
-end
-
-function CheckRook(Game::Game, Pos::Vector{Int64})
-    return typeof(Game[Pos[1], Pos[2]])
-end
-
-function CanMove(Game, PosI, PosF)
-    
-end
-
-function CanMoveRook(Game::Game, PosI::Vector{Int64}, PosF::Vector{Int64})
-    # Checks wether PosF is in the same lane (column or row) than PosI
-    return PosI[1]==PosF[1] || PosI[2]==PosF[2]
-end
-
-
-
-function InMiddleRook(Game::Game, PosI::Vector{Int64}, PosF::Vector{Int64})
-    # Checks wether there is any pieces in the middle
-    if PosI[1] == PosF[1]
-        pos1 = PosI[1]
-        for pos2 in PosI[2]:PosF[2]
-            if isa(GetBoard(Game,[pos1,pos2]), Piece)
-
-            end
-        end
-    end
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -150,7 +121,7 @@ function GetCoords(coords)
         else
             println("No encontrada la coordinada", coords)
         end
-        return ReealCoords
+        return RealCoords
     end
 
 end
@@ -198,10 +169,136 @@ function BePrinter(Game::Game)
     end
 end
 
+
+# -----------------------------------------------------------------------------------------------
+# ----------------------------------- COMPROBACIÓN LEGAL ----------------------------------------
+# -----------------------------------------------------------------------------------------------
+
+# ----------------------------------------ISA FUNCTIONS------------------------------------------
+function IsaRook(Game::Game, Pos::Vector{Int64} )
+    return isa(GetBoard(Game, Pos), Rook)
+end
+function IsaBishop(Game::Game, Pos::Vector{Int64})
+    return isa(GetBoard(Game,PosI), Bishop)
+end
+
+
+    
+
+
+
+# --------------------------------- CHECKS FOR ROOK ----------------------------------------------
+
+
+function LegalRook(Game::Game,PosI::Vector{Int64},PosF::Vector{Int64})
+
+    if CanMoveRook(Game::Game,PosI::Vector{Int64},PosF::Vector{Int64})
+
+
+
+
+    else
+        return false
+    end
+
+
+end
+
+function PlausiblePosRook(Vector::Vector{Any}, Team::Bool)
+    if isa(Vector[1], Rook)
+
+        for item in Vector[2:end]
+            
+            if isa(item, Piece)
+
+            end
+        end
+
+
+
+
+    else
+        error("Element 1 from PlausiblePosRook is not a rook")
+    end
+
+
+end
+function PlausiblePosRook()
+
+
+    PlausiblePosRook(Vector, Team)
+end
+
+function CanMoveRook(Game::Game, PosI::Vector{Int64}, PosF::Vector{Int64})
+    # Checks wether PosF is in the same lane (column or row) than PosI
+    return PosI[1]==PosF[1] || PosI[2]==PosF[2]
+end
+
+
+function InMiddleRook(Game::Game, PosI::Vector{Int64}, PosF::Vector{Int64})
+    # Checks wether there is any pieces in the middle
+    if PosI[1] == PosF[1]
+        pos1 = PosI[1]
+        for pos2 in PosI[2]:PosF[2]
+            if isa(GetBoard(Game,[pos1,pos2]), Piece)
+
+            end
+        end
+    end
+end
+
+
+
+
+
+
+# --------------------------------- CHECKS FOR BISHOP -------------------------------------------
+function LegalBishop()
+end
+# -----------------------------------------------------------------------------------------------
+# --------------------------------------- CHECKS INITIAL POS -----------------------------------
+# -----------------------------------------------------------------------------------------------
+
+function IsaPiece(Game::Game,Coords::Vector{Int64})
+    return isa(GetBoard(Game,Coords),Piece)
+end
+
+function CorrectTeam(Game::Game,Coords::Vector{Int64})
+    return GetTeam(GetBoard(Game, Coords)) == GetTeam(Game)
+end
+
+function CheckInitialPosition(Game::Game,Coords::Vector{Int64})
+    if IsaPiece(Game,Coords)
+        return CorrectTeam(Game, Coords)
+    else 
+        return false 
+    end
+end
+
+# -----------------------------------------------------------------------------------------------
+# --------------------------------------- CHECKS FINAL POS --------------------------------------
+# -----------------------------------------------------------------------------------------------
+
+function EspecificCheck(Game::Game,PosI::Vector{Int64},PosF::Vector{Int64})
+    
+    if IsaRook(Game, PosI)
+        return LegalRook(Game, PosI, PosF)
+
+    elseif IsaBishop(Game, PosI)
+        return CheckBishop(Game, PosI, PosF)
+
+    end
+end
+
+function CheckFinalPosition(Game::Game,PosI::Vector{Int64},PosF::Vector{Int64})
+    
+    EspecificCheck(Game,PosI,PosF)
+
+
+end
 # -----------------------------------------------------------------------------------------------
 # --------------------------------------- GAME LOOP PRIMITIVO -----------------------------------
 # -----------------------------------------------------------------------------------------------
-
 
 
 function main()
@@ -215,36 +312,18 @@ function main()
 
         BePrinter(Game)
 
-        println("Put the next coordinates in this way [1,4] would be 14")
+        println("Put the next coordinates in this way [1,a] would be 1a")
 
-        coordinates = readline()
-        println(coordinates)
-        coordinates = GetCoords(coordinates)
+        Fakecoordinates = readline()
+        coordinates = GetCoords(Fakecoordinates)
         println("the coordinates you choose were $coordinates")
+
+
+
+
 
     end
 
 end
 
 main() 
-
-
-
-
-
-
-
-
-
-
-
-Game = CreateFullBoard()
-BePrinter(Game)
-
-
-for row in eachrow(GetBoard(Game))
-    for item in row
-        print(item)
-    end
-    println(row)
-end
