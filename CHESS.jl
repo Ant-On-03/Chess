@@ -20,10 +20,11 @@ struct Bishop <: Piece
     team::Bool
 end
 
-struct ChessBoard
+struct Game
     Win::Bool
+    Player::Bool # 0 para las blancas, 1 para las negras
     Board::Matrix{Any}
-    ChessBoard(Win, Board) = !is_square_8(Board) ? error("Board not 8x8") : new(Win,Board)
+    Game(Win,Player, Board) = !is_square_8(Board) ? error("Board not 8x8") : new(Win,Player,Board)
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -31,20 +32,20 @@ end
 # -----------------------------------------------------------------------------------------------
 
 
-function GetBoard(ChessBoard::ChessBoard)
-    return ChessBoard.Board
+function GetBoard(Game::Game)
+    return Game.Board
 end
 
-function GetBoard(ChessBoard::ChessBoard, pos::Vector{Int64})
-    return ChessBoard.Board[pos[1],pos[2]]
+function GetBoard(Game::Game, pos::Vector{Int64})
+    return Game.Board[pos[1],pos[2]]
 end
 
-function GetWin(ChessBoard::ChessBoard)
-    return ChessBoard.Win
+function GetWin(Game::Game)
+    return Game.Win
 end
 
-function ChangeBoard(ChessBoard::ChessBoard,NewBoard::AbstractArray{Any,2})
-    ChessBoard.Board = NewBoard
+function ChangeBoard(Game::Game,NewBoard::AbstractArray{Any,2})
+    Game.Board = NewBoard
 end
 
 function KillPiece(Piece::Piece)
@@ -57,31 +58,31 @@ end
 # ----------------------------------- COMPROBACIÓN LEGAL ----------------------------------------
 # -----------------------------------------------------------------------------------------------
 
-function CheckRook(ChessBoard::ChessBoard, Pos::Vector{Int64} )
-    return isa(GetBoard(ChessBoard, Pos), Rook)
+function CheckRook(Game::Game, Pos::Vector{Int64} )
+    return isa(GetBoard(Game, Pos), Rook)
 end
 
-function CheckRook(ChessBoard::ChessBoard, Pos::Vector{Int64})
-    return typeof(ChessBoard[Pos[1], Pos[2]])
+function CheckRook(Game::Game, Pos::Vector{Int64})
+    return typeof(Game[Pos[1], Pos[2]])
 end
 
-function CanMove(ChessBoard, PosI, PosF)
+function CanMove(Game, PosI, PosF)
     
 end
 
-function CanMoveRook(ChessBoard::ChessBoard, PosI::Vector{Int64}, PosF::Vector{Int64})
+function CanMoveRook(Game::Game, PosI::Vector{Int64}, PosF::Vector{Int64})
     # Checks wether PosF is in the same lane (column or row) than PosI
     return PosI[1]==PosF[1] || PosI[2]==PosF[2]
 end
 
 
 
-function InMiddleRook(ChessBoard::ChessBoard, PosI::Vector{Int64}, PosF::Vector{Int64})
+function InMiddleRook(Game::Game, PosI::Vector{Int64}, PosF::Vector{Int64})
     # Checks wether there is any pieces in the middle
     if PosI[1] == PosF[1]
         pos1 = PosI[1]
         for pos2 in PosI[2]:PosF[2]
-            if isa(GetBoard(ChessBoard,[pos1,pos2]), Piece)
+            if isa(GetBoard(Game,[pos1,pos2]), Piece)
 
             end
         end
@@ -98,7 +99,7 @@ end
 
 function CreateEmptyBoard()
     Board = Array{Any,2}(undef,8,8) 
-    return ChessBoard(false, Board)
+    return Game(false, false, Board)
 end
 
 function CreateFullBoard()
@@ -108,7 +109,7 @@ function CreateFullBoard()
     Board[1,2] = Bbishop()
     Board[1,7] = Bbishop()
 
-    return ChessBoard(false, Board)
+    return Game(false, false, Board)
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -137,14 +138,22 @@ end
 
 
 function GetCoords(coords)
-    translate = Dict("a"=>1,"b"=>2,"c"=>3,"d"=>4,"e"=>5,"f"=>6,"g"=>7,"h"=>8,
-    "1"=>8,"2"=>7,"3"=>6,"4"=>5,"5"=>4,"6"=>3,"7"=>2,"8"=>1)
+    translate =  Dict('a'=>1,'b'=>2,'c'=>3,'d'=>4,'e'=>5,'f'=>6,'g'=>7,'h'=>8,
+    '1'=>8,'2'=>7,'3'=>6,'4'=>5,'5'=>4,'6'=>3,'7'=>2,'8'=>1)
+
+    RealCoords = []
 
     for coord in coords
-        #ranslate[coord]
+        
+        if haskey(translate, coord)
+            push!(RealCoords, translate[coord])
+        else
+            println("No encontrada la coordinada", coords)
+        end
+        return ReealCoords
     end
-end
 
+end
 
 # -----------------------------------------------------------------------------------------------
 # --------------------------------------------- VISUAL ------------------------------------------
@@ -166,7 +175,7 @@ function Visual(item::Any)
 end
 
 
-function BePrinter(ChessBoard::ChessBoard)
+function BePrinter(Game::Game)
     cnt::Int64 = 8
     abec = "abcdefgh"
 
@@ -177,7 +186,7 @@ function BePrinter(ChessBoard::ChessBoard)
 
     println("")
 
-    for row in eachrow(GetBoard(ChessBoard))
+    for row in eachrow(GetBoard(Game))
         print(cnt, " ")
         cnt -= 1
         for item in row
@@ -199,14 +208,15 @@ function main()
 
     println("workinga")
 
-    ChessBoard = CreateFullBoard()
-    BePrinter(ChessBoard)
+    Game = CreateFullBoard()
+    BePrinter(Game)
 
-    while !GetWin(ChessBoard)
+    while !GetWin(Game)
 
-        BePrinter(ChessBoard)
+        BePrinter(Game)
 
         println("Put the next coordinates in this way [1,4] would be 14")
+
         coordinates = readline()
         println(coordinates)
         coordinates = GetCoords(coordinates)
