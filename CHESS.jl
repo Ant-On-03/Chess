@@ -39,6 +39,10 @@ function GetBoard(ChessBoard::ChessBoard, pos::Vector{Int64})
     return ChessBoard.Board[pos[1],pos[2]]
 end
 
+function GetWin(ChessBoard::ChessBoard)
+    return ChessBoard.Win
+end
+
 function ChangeBoard(ChessBoard::ChessBoard,NewBoard::AbstractArray{Any,2})
     ChessBoard.Board = NewBoard
 end
@@ -84,13 +88,6 @@ function InMiddleRook(ChessBoard::ChessBoard, PosI::Vector{Int64}, PosF::Vector{
     end
 end
 
-
-
-for number in 9:-1:5
-    println(number)
-end
-
-
 # -----------------------------------------------------------------------------------------------
 # ------------------------------------- CREACIÓN DE TABLEROS ------------------------------------
 # -----------------------------------------------------------------------------------------------
@@ -105,7 +102,7 @@ function CreateEmptyBoard()
 end
 
 function CreateFullBoard()
-    Board = Array{Any,2}(undef,8,8)
+    Board::Matrix{Any} = fill(0,(8,8))
     Board[1,1] = Brook()
     Board[1,8] = Brook()
     Board[1,2] = Bbishop()
@@ -139,15 +136,30 @@ end
 # -----------------------------------------------------------------------------------------------
 
 
+function GetCoords(coords)
+    translate = Dict("a"=>1,"b"=>2,"c"=>3,"d"=>4,"e"=>5,"f"=>6,"g"=>7,"h"=>8,
+    "1"=>8,"2"=>7,"3"=>6,"4"=>5,"5"=>4,"6"=>3,"7"=>2,"8"=>1)
+
+    for coord in coords
+        #ranslate[coord]
+    end
+end
 
 
 # -----------------------------------------------------------------------------------------------
 # --------------------------------------------- VISUAL ------------------------------------------
 # -----------------------------------------------------------------------------------------------
 
-function Visual(item)
+function Visual(item::Any)
     if isa(item, Piece)
-        return "P"
+
+        if isa(item,Rook)
+            return "R"
+        elseif isa(item,Bishop)
+            return "B"
+        else
+            return "P"
+        end
     else
         return "-"
     end
@@ -155,10 +167,23 @@ end
 
 
 function BePrinter(ChessBoard::ChessBoard)
-    println("workingb")
-    for row in ChessBoard
+    cnt::Int64 = 8
+    abec = "abcdefgh"
+
+    print("  ")
+    for letter in abec
+        print(letter, " ")
+    end
+
+    println("")
+
+    for row in eachrow(GetBoard(ChessBoard))
+        print(cnt, " ")
+        cnt -= 1
         for item in row
-            print( Visual(item)," ")
+            print(Visual(item) * " ")
+
+            #print(Visual(item), " ")
         end
         println("")
     end
@@ -177,6 +202,18 @@ function main()
     ChessBoard = CreateFullBoard()
     BePrinter(ChessBoard)
 
+    while !GetWin(ChessBoard)
+
+        BePrinter(ChessBoard)
+
+        println("Put the next coordinates in this way [1,4] would be 14")
+        coordinates = readline()
+        println(coordinates)
+        coordinates = GetCoords(coordinates)
+        println("the coordinates you choose were $coordinates")
+
+    end
+
 end
 
 main() 
@@ -191,11 +228,13 @@ main()
 
 
 
+Game = CreateFullBoard()
+BePrinter(Game)
 
 
-
-
-
-
-
-
+for row in eachrow(GetBoard(Game))
+    for item in row
+        print(item)
+    end
+    println(row)
+end
